@@ -80,7 +80,7 @@ def readImageandLandmark(File, batch_size=32):
 
 
 def change_vgg16(input_shape):
-    # 改变vgg最后一层，直接回归一个72的预测值
+    # 改变vgg最后一层，直接回归一个24 x 2的预测值，不考虑可见性
     img_input = Input(shape=input_shape)
     # Block 1
     x = Conv2D(64, (3, 3), activation='relu', padding='same', name='block1_conv1')(img_input)
@@ -133,29 +133,26 @@ def change_vgg16(input_shape):
 # 要考虑不同衣服对应的归一化参数不同
 # loss是一个tensor运算
 
-# y_true(batchsize,25,3)(25 = 24 + 1:1代表每一张图片的归一化参数，参考比赛的公式定义)
+# y_true(batchsize,25,3)(25 = 24 + 1，1代表每一张图片的归一化参数，参考比赛的公式定义)
 with tf.device('/cpu:0'):
     def NEloss(y_true, y_pred):
+        # 获得NP的值，维度是(batchsize,24)
         NP = y_true[:, 24, 0]
-        # NP = K.flatten(NP)
-        # NP, _ = tf.unique(NP)
 
         NP = K.reshape(NP, [-1, 1, 1])
 
         # 把坐标值弄出来
         y_true = y_true[:, 0:24, :]
-        print(y_true)
-
-        # vis = tf.shape(y_true[:,:,2])
+        #print(y_true)
 
         # 得到真实坐标的可见性，然后将其转换为0和1的值
         vis = y_true[:, :, 2]
         y = K.ones(shape=(1))  # 下行equal中的y必须是tensor，就先声明一个
         vis = K.equal(vis, y)  # 结果是bool类型
         vis = K.cast(vis, dtype='float32')  # 转变数据类型，成为0和1
-        print(vis)
+        #print(vis)
 
-        # 得到不含v的坐标值
+        # 得到不含v(可见性)的坐标值
         y_true_no_v = y_true[:, :, 0:2]
 
         # 坐标轴归一到[-1,1],预测时记得还原
