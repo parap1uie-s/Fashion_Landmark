@@ -3,8 +3,10 @@ from keras.layers import *
 from keras import backend as K
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.normalization import BatchNormalization
+from keras.engine.topology import Layer
+import numpy as np
 
-def YoloBasedModel(height, width, point_num, point_classes, phase='train'):
+def YoloBasedModel(width, height, point_num, point_classes, phase='train'):
     assert phase in ['train','evaluate'], "Model phase must be train or evaluate!"
 
     input_tensor = Input((width, height, 3), name="input_tensor")
@@ -18,19 +20,21 @@ def YoloBasedModel(height, width, point_num, point_classes, phase='train'):
     X = Conv2D(output_dims, (1,1), activation='linear', name="output", use_bias=True)(X)
     FinalConvShape = K.int_shape(X)
     X = Reshape((FinalConvShape[1], FinalConvShape[2], point_num, 3+len(point_classes)))(X)
+    X = ModelHead()(X)
 
     if phase is 'train':
         ground_truth = Input((FinalConvShape[1], FinalConvShape[2], point_num, 3+len(point_classes)), name="ground_truth")
         # loss
         model_loss = Lambda(yolo_loss,output_shape=(1, ),name='yolo_loss',
             arguments={'point_num': point_num,
-                       'point_classes': point_classes})([X, ground_truth])
-        model = Model(inputs=input_tensor, outputs=model_loss)
+                       'point_classes': point_classes,
+                       'grid_length': width / FinalConvShape[1] })([X, ground_truth])
+        model = Model(inputs=[input_tensor,ground_truth], outputs=model_loss)
     else:
         model = Model(inputs=input_tensor, outputs=X)
 
-
-    model.compile(loss="mse", optimizer="adam")
+    model.compile(optimizer='adam', loss={
+        'yolo_loss': lambda y_true, y_pred: y_pred})  # This is a hack to use the custom loss function in the last layer.
     return model
 
 def darknet52(image_input, include_top = True, class_num = 1000):
@@ -78,3 +82,27 @@ def Darknet_Repeat_Residual_Block(tensor, filters, kernels, block_name=None, rep
         X = DarkNet_ConvBlock(X, filters[1], kernels[1], strides=1, block_name=block_name+'_{}_C2'.format(i))
         X = Concatenate(axis=-1)([X, X_shortcut])
     return X
+
+class ModelHead(Layer):
+
+    def __init__(self, **kwargs):
+        super(ModelHead, self).__init__(**kwargs)
+
+    def call(self, x):
+        # visiblity
+        pred_vis = model_output[...,0]
+        pred_vis = K.sigmoid(pred_vis)
+        pred_vis = K.expand_dims(pred_vis, axis=-1)
+
+        # x and y
+        pred_position = model_output[...,1:3]
+        pred_position = K.sigmoid(pred_position)
+
+        # classify
+        pred_classprob = model_output[...,3:]
+        pred_classprob = K.softmax(pred_classprob)
+
+        return K.concatenate([pred_vis, pred_position, pred_classprob], axis=-1)
+
+    def compute_output_shape(self, input_shape):
+        return input_shape
