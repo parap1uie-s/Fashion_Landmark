@@ -2,6 +2,8 @@ import os
 import numpy as np
 from PIL import Image
 import pandas as pd
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 def resize_img(Img, savePath, fileName):
     W,H = Img.size
@@ -26,8 +28,8 @@ def read_anno(annoPath, savePath, loadPath):
         split_axis = r.ix[2:].str.split(pat='_', expand=True)
         split_axis.columns = ['x', 'y', 'vis']
 
-        split_axis.loc[split_axis['vis']=='1','x'] = np.array(split_axis[split_axis['vis']=='1']['x'], dtype='float32') * W_ratio
-        split_axis.loc[split_axis['vis']=='1','y'] = np.array(split_axis[split_axis['vis']=='1']['y'], dtype='float32') * H_ratio
+        split_axis.loc[split_axis['vis']!='-1','x'] = np.array(split_axis[split_axis['vis']!='-1']['x'], dtype='float32') * W_ratio
+        split_axis.loc[split_axis['vis']!='-1','y'] = np.array(split_axis[split_axis['vis']!='-1']['y'], dtype='float32') * H_ratio
 
         res = [fileName] + [r['image_category']] + ['_'.join(i) for i in split_axis.astype('str').values.tolist()]
         save_handle.write(','.join(res) + "\n")
@@ -52,4 +54,4 @@ def read_test(annoPath, savePath, loadPath):
 
 if __name__ == '__main__':
     read_anno('../data/train/Annotations/train.csv', 'train/', '../data/train/')
-    read_test('../data/test/test.csv', 'test/', '../data/test/')
+    # read_test('../data/test/test.csv', 'test/', '../data/test/')
