@@ -8,7 +8,7 @@ import pandas as pd
 # 512 / 16 = 32
 
 def YoloBasedGenerator(datalist, point_num, grid_length = 32, batch_size = 16, val_ratio = 0.9, data_type='train'):
-    rootpath = '../../croped_data/train/'
+    rootpath = '../../Tianchi_Landmark/croped_data/train/'
     # datalist = [(filename, (x1,y1,v1,grid),(x2,y2,v2,grid)...(x24,y24,v24,grid)) , (filename......)]
     
     if data_type is "train":
@@ -24,17 +24,24 @@ def YoloBasedGenerator(datalist, point_num, grid_length = 32, batch_size = 16, v
         Imgs = []
         ind = np.random.choice(total_num, batch_size, replace=False)
 
-        for i in ind:
+        for count,i in enumerate(ind):
             grid_counter = 256*[0]
             fileName = datalist[i][0]
             Imgs.append( np.array(Image.open( os.path.join(rootpath,fileName) )) )
             for key, point in enumerate(datalist[i][1:]):
+                if int(point[2]) == -1:
+                    continue
                 grid_num = int(point[3])
                 grid_w = int(grid_num % 16)
                 grid_h = int(grid_num / 16)
                 k = [0] * 24
                 k[key] = 1
-                point_groundtruth[grid_w, grid_h, grid_counter[grid_num]] = [point[2], point[0], point[1]] + k
+                try:
+                    point_groundtruth[count, grid_w, grid_h, grid_counter[grid_num]] = [point[2], point[0], point[1]] + k
+                except Exception as e:
+                    print(e)
+                    continue
+                
                 grid_counter[grid_num] += 1
         Imgs = np.array(Imgs) / 255.0
         yield [Imgs, point_groundtruth], np.zeros((batch_size))

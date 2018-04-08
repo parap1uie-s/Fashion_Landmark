@@ -34,7 +34,7 @@ def YoloBasedModel(width, height, point_num, point_classes, phase='train'):
     else:
         model = Model(inputs=input_tensor, outputs=X)
 
-    model.compile(optimizer='adam', loss={
+    model.compile(optimizer='sgd', loss={
         'yolo_loss': lambda y_true, y_pred: y_pred})  # This is a hack to use the custom loss function in the last layer.
     return model
 
