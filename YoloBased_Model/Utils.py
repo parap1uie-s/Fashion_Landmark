@@ -1,6 +1,5 @@
 import numpy as np
 from PIL import Image
-import random
 import os
 import pandas as pd
 
@@ -37,7 +36,8 @@ def YoloBasedGenerator(datalist, point_num, grid_length = 32, batch_size = 16, v
                 k = [0] * 24
                 k[key] = 1
                 try:
-                    point_groundtruth[count, grid_w, grid_h, grid_counter[grid_num]] = [point[2], point[0], point[1]] + k
+                    # point_groundtruth[count, grid_w, grid_h, grid_counter[grid_num]] = [point[2], point[0], point[1]] + k
+                    point_groundtruth[count, grid_w, grid_h, grid_counter[grid_num]] = [1, point[0], point[1]] + k
                 except Exception as e:
                     print(e)
                     continue

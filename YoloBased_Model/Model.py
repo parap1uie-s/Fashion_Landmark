@@ -1,6 +1,7 @@
 from keras.models import *
 from keras.layers import *
 from keras import backend as K
+from keras.optimizers import *
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.normalization import BatchNormalization
 from keras.engine.topology import Layer
@@ -24,6 +25,8 @@ def YoloBasedModel(width, height, point_num, point_classes, phase='train'):
     X = Reshape((FinalConvShape[1], FinalConvShape[2], point_num, 3+point_classes))(X)
     X = ModelHead()(X)
 
+    optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.05, amsgrad=True, clipnorm=5.0)
+
     if phase is 'train':
         ground_truth = Input((FinalConvShape[1], FinalConvShape[2], point_num, 3+point_classes), name="ground_truth")
         # loss
@@ -31,11 +34,11 @@ def YoloBasedModel(width, height, point_num, point_classes, phase='train'):
             arguments={'point_num': point_num,
                        'grid_length': width / FinalConvShape[1] })([X, ground_truth])
         model = Model(inputs=[input_tensor,ground_truth], outputs=model_loss)
+        model.compile(optimizer=optimizer, loss={'yolo_loss': lambda y_true, y_pred: y_pred})  # This is a hack to use the custom loss function in the last layer.
     else:
         model = Model(inputs=input_tensor, outputs=X)
+        model.compile(optimizer=optimizer, loss='mse')
 
-    model.compile(optimizer='sgd', loss={
-        'yolo_loss': lambda y_true, y_pred: y_pred})  # This is a hack to use the custom loss function in the last layer.
     return model
 
 def darknet52(image_input, include_top = True, class_num = 1000):
