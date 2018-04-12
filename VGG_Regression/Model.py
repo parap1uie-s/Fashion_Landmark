@@ -1,5 +1,13 @@
-from keras.models import Model
-from keras.layers import Input, Dense, Conv2D, Concatenate, MaxPooling2D, Flatten, Reshape
+from keras.models import *
+from keras.layers import *
+from keras import backend as K
+from keras.optimizers import *
+from keras.layers.advanced_activations import LeakyReLU
+from keras.layers.normalization import BatchNormalization
+from keras.engine.topology import Layer
+import numpy as np
+
+from Losses import *
 
 def change_vgg16(input_shape):
     # 改变vgg最后一层，直接回归一个24 x 2的预测值，不考虑可见性
@@ -41,13 +49,11 @@ def change_vgg16(input_shape):
     x_final_dense = Dense(4096, activation='relu', name='fc2')(x)
 
     # regress block
-    x_landmark = Dense(48, name='prediction_landmark', activation='linear')(x_final_dense)
-    x_landmark = Reshape((24, 2))(x_landmark)
+    x_landmark = Dense(48, name='prediction_landmark')(x_final_dense)
+    x = Reshape((24, 2))(x_landmark)
 
-    # visability block
-    # x_vis = Dense(24, name='prediction_vis', activation='sigmoid')(x_final_dense)
-
-    # model = Model(img_input, outputs=[x_landmark, x_vis], name='change_vgg16')
-    model = Model(img_input, outputs=x_landmark, name='change_vgg16')
+    # x = [Dense(3, activation='softmax', name='p%d' % (i + 1))(x_final_dense) for i in range(24)]
+    output = [x]
+    model = Model(img_input, outputs=output, name='change_vgg16')
 
     return model

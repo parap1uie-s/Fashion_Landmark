@@ -1,14 +1,20 @@
-# 用python的yield 批读取处理图片
-def readImageandLandmark(File, batch_size=32):
-    # File 是一个ndarry
+import numpy as np
+from PIL import Image
+import os
+import pandas as pd
+import random
 
+# 用python的yield 批读取处理图片
+def readImageandLandmark(File, batch_size=32, rootpath='../../Tianchi_Landmark/croped_data/train/'):
+    # File 是一个ndarry
+    clothes = ['blouse', 'dress', 'outwear', 'skirt', 'trousers']
     while True:
         slice = np.array(random.sample(list(File), batch_size))
 
         # 处理图像
         x_train = []
         for i in slice:
-            img = np.array(Image.open(i[0]))
+            img = np.array(Image.open(os.path.join(rootpath,i[0])))
             x_train.append(img)
 
         x_train = np.array(x_train)
@@ -48,3 +54,9 @@ def readImageandLandmark(File, batch_size=32):
 
         # print(x_train.shape, y_train.shape)
         yield (x_train, y_train)
+        
+# 上衣、外套、连衣裙为两个腋窝点欧式距离，裤子和半身裙为两个裤头点的欧式距离
+
+def computeNP(a):
+    NP = np.sqrt(np.sum(np.square(a[0, :2] - a[1, :2]), axis=-1, keepdims=True))
+    return NP
