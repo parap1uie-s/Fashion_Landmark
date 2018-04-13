@@ -23,7 +23,7 @@ def exec_res(predict_result, config, offset_x, offset_y):
                 if prob_max[point_index] < cache[point_index+3]:
                     temp_x = round( (cache[1] + config['grid_length']) * w - offset_x)
                     temp_y = round( (cache[2] + config['grid_length']) * h - offset_y)
-                    if temp_x < 0 or temp_y < 0:
+                    if temp_x < 1 or temp_y < 1:
                         continue
                     prob_max[point_index] = cache[point_index+3]
                     position[point_index, 0] = temp_x
@@ -74,19 +74,15 @@ if __name__ == '__main__':
     rootpath = '../../Tianchi_Landmark/croped_data/test/'
     filepath = os.path.join(rootpath,'test.csv')
     csv_handle = pd.read_csv(filepath)
-    dest_file = open('result.txt','w+',encoding='utf-8')
+    dest_file = open('result.csv','w+',encoding='utf-8')
 
-    dest_file.write('image_id,image_category,neckline_left,neckline_right,center_front,shoulder_left,\
-        shoulder_right,armpit_left,armpit_right,waistline_left,waistline_right,cuff_left_in,cuff_left_out,\
-        cuff_right_in,cuff_right_out,top_hem_left,top_hem_right,waistband_left,waistband_right,hemline_left,\
-        hemline_right,crotch,bottom_left_in,bottom_left_out,bottom_right_in,bottom_right_out' + '\n')
+    dest_file.write('image_id,image_category,neckline_left,neckline_right,center_front,shoulder_left,shoulder_right,armpit_left,armpit_right,waistline_left,waistline_right,cuff_left_in,cuff_left_out,cuff_right_in,cuff_right_out,top_hem_left,top_hem_right,waistband_left,waistband_right,hemline_left,hemline_right,crotch,bottom_left_in,bottom_left_out,bottom_right_in,bottom_right_out' + '\n')
 
-    if os.path.exists("yolobased_weight.h5"):
-        model.load_weights("yolobased_weight.h5", by_name=True)
+    model.load_weights("yolobased_weight.h5", by_name=True)
 
     for row in csv_handle.iterrows():
         r = row[1]
-        img = np.expand_dims(np.array( Image.open( os.path.join(rootpath,r[0]) )),axis=0)
+        img = np.expand_dims(np.array( Image.open( os.path.join(rootpath,r[0]) )),axis=0) / 255.0
         img_type = r[1]
         hori_pad = r[2]
         vert_pad = r[3]
