@@ -16,14 +16,11 @@ optimizer = SGD(lr=0.001, decay=1e-6, momentum=0.9, clipnorm=5.0)
 model.compile(optimizer=optimizer, loss=NEloss)
 
 annoPath = '../../Tianchi_Landmark/croped_data/train/Annotations/train.csv'
-csv_handle = pd.read_csv(annoPath)
-
-file = np.array(csv_handle)
 
 epoch = 1000
 for e in range(epoch):
     model.fit_generator(
-        readImageandLandmark(file, batch_size), 
+        readImageandLandmark(annoPath, batch_size), 
         steps_per_epoch=256, 
         epochs=1, 
         use_multiprocessing=True,
