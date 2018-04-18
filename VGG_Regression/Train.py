@@ -3,14 +3,16 @@ from Utils import *
 from Losses import *
 import os
 
-input_shape = (512, 512, 3)
-batch_size = 2
-model = change_vgg16(input_shape)
+input_shape = (256, 256, 3)
+batch_size = 4
+model = change_vgg19(input_shape)
+
 weight_path = 'vgg19_weights_tf_dim_ordering_tf_kernels_notop.h5'
 model.load_weights(weight_path, by_name=True, skip_mismatch=True)
 
 if os.path.exists("vggbased_weight.h5"):
     model.load_weights("vggbased_weight.h5", by_name=True)
+
 
 optimizer = SGD(lr=0.001, decay=1e-6, momentum=0.9, clipnorm=5.0)
 model.compile(optimizer=optimizer, loss=NEloss)

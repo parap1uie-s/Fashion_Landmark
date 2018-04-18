@@ -9,7 +9,7 @@ import numpy as np
 
 from Losses import *
 
-def change_vgg16(input_shape):
+def change_vgg19(input_shape):
     # 改变vgg最后一层，直接回归一个24 x 2的预测值，不考虑可见性
     img_input = Input(shape=input_shape)
     # Block 1
@@ -48,7 +48,7 @@ def change_vgg16(input_shape):
 
     # Classification block
     x = Flatten(name='flatten')(x)
-    x = Dense(4096, activation='relu', name='fc1')(x)
+    x = Dense(4096, activation='relu', name='fc1_1')(x)
     x_final_dense = Dense(4096, activation='relu', name='fc2')(x)
 
     # regress block
@@ -57,6 +57,6 @@ def change_vgg16(input_shape):
 
     # x = [Dense(3, activation='softmax', name='p%d' % (i + 1))(x_final_dense) for i in range(24)]
     output = [x]
-    model = Model(img_input, outputs=output, name='change_vgg16')
+    model = Model(img_input, outputs=output, name='change_vgg19')
 
     return model

@@ -5,16 +5,26 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 
-def exec_res(predict_result, offset_x, offset_y):
+def exec_res(predict_result, offset_x, offset_y, crop_pos):
     res = predict_result[0]
 
     prob_max = np.zeros((24))
     position = np.ones((24,3)) * -1
 
-    for i in range(24):
-        cache = res[i]
-        # cache = cache * 256 + 256
-        position[i] = np.maximum(cache - [offset_x, offset_y],0).astype(int).tolist() + [1]
+    if crop_pos is None:
+        # no crop
+        for i in range(24):
+            cache = res[i] / (256 / 512)
+            position[i] = np.maximum(cache - [offset_x, offset_y],0).astype(int).tolist() + [1]
+    else:
+        y1, x1, y2, x2 = crop_pos
+        # crop
+        for i in range(24):
+            cache = res[i]
+            cache[0] = cache[0] / (256 / (x2 - x1)) + x1
+            cache[1] = cache[1] / (256 / (y2 - y1)) + y1
+            position[i] = np.maximum(cache - [offset_x, offset_y],0).astype(int).tolist() + [1]
+
     return position
 
 def img_type_filter(points, img_type):
@@ -49,9 +59,9 @@ def img_type_filter(points, img_type):
     return filted_points
 
 if __name__ == '__main__':
-    input_shape = (512, 512, 3)
+    input_shape = (256, 256, 3)
 
-    model = change_vgg16(input_shape)
+    model = change_vgg19(input_shape)
     rootpath = '../../Tianchi_Landmark/croped_data/test/'
     filepath = os.path.join(rootpath,'test.csv')
     csv_handle = pd.read_csv(filepath)
@@ -63,14 +73,23 @@ if __name__ == '__main__':
 
     for row in csv_handle.iterrows():
         r = row[1]
-        img = np.expand_dims(np.array( Image.open( os.path.join(rootpath,r[0]) )),axis=0) / 255.0
+        
         img_type = r[1]
         hori_pad = r[2]
         vert_pad = r[3]
+        y1, x1, y2, x2 = r.loc[['y1','x1','y2','x2']].values.tolist()
         
+        if y1 == x1 == y2 == x2 == 0:
+            # no crop
+            img = np.expand_dims(np.array( Image.open(os.path.join(rootpath,r['image_id'])).resize((256,256),Image.ANTIALIAS) ),axis=0) / 255.0
+            points = exec_res(model.predict(img), hori_pad, vert_pad, None)
+        else:
+            img = np.expand_dims(np.array( Image.open(os.path.join(rootpath,r['image_id'])).crop((x1,y1,x2,y2)).resize((256,256),Image.ANTIALIAS) ),axis=0) / 255.0
+            points = exec_res(model.predict(img), hori_pad, vert_pad, (y1, x1, y2, x2))
+
         res_line = [r[0],img_type]
 
-        points = exec_res(model.predict(img), hori_pad, vert_pad)
+        
         points = img_type_filter(points, img_type)
         assert len(points) == 24
         for p in range(0,len(points)):
