@@ -9,7 +9,7 @@ def computeNP(a):
     NP = np.sqrt(np.sum(np.square(a[0, :2] - a[1, :2]), axis=-1, keepdims=True))
     return NP
 
-def readImageandLandmark(annoPath, batch_size=32, rootpath='../../Tianchi_Landmark/croped_data/train/'):
+def readImageandLandmark(annoPath, batch_size=32, rootpath='../../Tianchi_Landmark/croped_data/train/', data_augment=True):
     csv_handle = pd.read_csv(annoPath)
     clothes = ['blouse', 'dress', 'outwear', 'skirt', 'trousers']
 
@@ -50,6 +50,16 @@ def readImageandLandmark(annoPath, batch_size=32, rootpath='../../Tianchi_Landma
 
                 split_axis.loc[split_axis['vis']!='-1','x'] = (np.array(split_axis[split_axis['vis']!='-1']['x'], dtype='float32') - x1) * (resize_shape / (x2 - x1))
                 split_axis.loc[split_axis['vis']!='-1','y'] = (np.array(split_axis[split_axis['vis']!='-1']['y'], dtype='float32') - y1) * (resize_shape / (y2 - y1))
+
+            if data_augment:
+                aug =  random.randint(0,2)
+                # 水平翻转
+                if aug == 1:
+                    Img_object = Img_object.transpose(Image.FLIP_LEFT_RIGHT)
+                    split_axis.loc[split_axis['vis']!='-1','x'] = resize_shape - split_axis.loc[split_axis['vis']!='-1','x']
+                elif aug == 2:
+                    Img_object = Img_object.transpose(Image.FLIP_TOP_BOTTOM)
+                    split_axis.loc[split_axis['vis']!='-1','y'] = resize_shape - split_axis.loc[split_axis['vis']!='-1','y']
 
             x_train.append(np.array(Img_object))
 
