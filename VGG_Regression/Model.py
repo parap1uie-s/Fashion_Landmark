@@ -52,7 +52,7 @@ def change_vgg19(input_shape):
     x_final_dense = Dense(4096, activation='relu', name='fc2')(x)
 
     # regress block
-    x_landmark = Dense(48, name='prediction_landmark', activation='relu')(x_final_dense)
+    x_landmark = Dense(48, name='prediction_landmark', activation='linear')(x_final_dense)
     x = Reshape((24, 2))(x_landmark)
 
     # x = [Dense(3, activation='softmax', name='p%d' % (i + 1))(x_final_dense) for i in range(24)]
