@@ -5,7 +5,7 @@ with tf.device('/cpu:0'):
     def NEloss(y_true, y_pred):
         NP = y_true[:, 24, 0]
         NP = K.reshape(NP, [-1, 1, 1])
-        NP = K.maximum(NP,1) / 128
+        NP = K.maximum(NP,1) / 256
         # 把坐标值弄出来
         y_true = y_true[:, 0:24, :]
         #print(y_true)
@@ -21,8 +21,8 @@ with tf.device('/cpu:0'):
         y_true_no_v = y_true[:, :, 0:2]
 
         # 坐标轴归一到[-1,1],预测时记得还原
-        y_true_no_v = (y_true_no_v - 128) / 128
-        y_pred = (y_pred - 128) / 128
+        y_true_no_v = (y_true_no_v - 256) / 256
+        y_pred = (y_pred - 256) / 256
 
         # 每一个元素进行重复，0,1 -> 0,0,1,1
         vis = K.reshape(K.repeat_elements(vis, 2, axis=1), [-1, 24, 2])

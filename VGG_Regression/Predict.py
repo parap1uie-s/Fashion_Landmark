@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 
-def exec_res(predict_result, offset_x, offset_y, crop_pos):
+def exec_res(predict_result, offset_x, offset_y, hori_pad_new, vert_pad_new, crop_pos):
     res = predict_result[0]
 
     prob_max = np.zeros((24))
@@ -14,15 +14,15 @@ def exec_res(predict_result, offset_x, offset_y, crop_pos):
     if crop_pos is None:
         # no crop
         for i in range(24):
-            cache = res[i] / (256 / 512)
+            cache = res[i]
             position[i] = np.maximum(cache - [offset_x, offset_y],0).astype(int).tolist() + [1]
     else:
         y1, x1, y2, x2 = crop_pos
         # crop
         for i in range(24):
             cache = res[i]
-            cache[0] = cache[0] / (256 / (x2 - x1)) + x1
-            cache[1] = cache[1] / (256 / (y2 - y1)) + y1
+            cache[0] = cache[0] - hori_pad_new + x1
+            cache[1] = cache[1] - vert_pad_new + y1
             position[i] = np.maximum(cache - [offset_x, offset_y],0).astype(int).tolist() + [1]
 
     return position
@@ -59,7 +59,7 @@ def img_type_filter(points, img_type):
     return filted_points
 
 if __name__ == '__main__':
-    input_shape = (256, 256, 3)
+    input_shape = (512, 512, 3)
 
     model = change_vgg19(input_shape)
     rootpath = '../../Tianchi_Landmark/croped_data/test/'
@@ -81,11 +81,14 @@ if __name__ == '__main__':
         
         if y1 == x1 == y2 == x2 == 0:
             # no crop
-            img = np.expand_dims(np.array( Image.open(os.path.join(rootpath,r['image_id'])).resize((256,256),Image.ANTIALIAS) ),axis=0) / 255.0
+            img = np.expand_dims(np.array( Image.open(os.path.join(rootpath,r['image_id'])) ),axis=0) / 255.0
             points = exec_res(model.predict(img), hori_pad, vert_pad, None)
         else:
-            img = np.expand_dims(np.array( Image.open(os.path.join(rootpath,r['image_id'])).crop((x1,y1,x2,y2)).resize((256,256),Image.ANTIALIAS) ),axis=0) / 255.0
-            points = exec_res(model.predict(img), hori_pad, vert_pad, (y1, x1, y2, x2))
+            img_object = Image.open(os.path.join(rootpath,r['image_id'])).crop((x1,y1,x2,y2))
+            img_object, hori_pad_new, vert_pad_new = pad_img(img_object, 512)
+
+            img = np.expand_dims(np.array( img_object ),axis=0) / 255.0
+            points = exec_res(model.predict(img), hori_pad, vert_pad, hori_pad_new, vert_pad_new, (y1, x1, y2, x2))
 
         res_line = [r[0],img_type]
 

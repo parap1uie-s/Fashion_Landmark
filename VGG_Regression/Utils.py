@@ -16,9 +16,7 @@ def readImageandLandmark(annoPath, batch_size=32, rootpath='../../Tianchi_Landma
     data_num = len(csv_handle)
 
     offset = 5
-    resize_shape = 256
     origin_shape = 512
-    resize_ratio = resize_shape / origin_shape
 
     while True:
         x_train = []
@@ -35,10 +33,9 @@ def readImageandLandmark(annoPath, batch_size=32, rootpath='../../Tianchi_Landma
 
             if y1 == x1 == y2 == x2 == 0:
                 # no crop
-                Img_object = Image.open(os.path.join(rootpath,r['image_id'])).resize((resize_shape,resize_shape),Image.ANTIALIAS)
-
-                split_axis.loc[split_axis['vis']!='-1','x'] = np.array(split_axis[split_axis['vis']!='-1']['x'], dtype='float32') * resize_ratio
-                split_axis.loc[split_axis['vis']!='-1','y'] = np.array(split_axis[split_axis['vis']!='-1']['y'], dtype='float32') * resize_ratio
+                Img_object = Image.open(os.path.join(rootpath,r['image_id']))
+                split_axis.loc[split_axis['vis']!='-1','x'] = np.array(split_axis[split_axis['vis']!='-1']['x'], dtype='float32')
+                split_axis.loc[split_axis['vis']!='-1','y'] = np.array(split_axis[split_axis['vis']!='-1']['y'], dtype='float32')
             else:
                 # crop
                 y1 = max(y1 - offset, 0)
@@ -46,20 +43,20 @@ def readImageandLandmark(annoPath, batch_size=32, rootpath='../../Tianchi_Landma
                 y2 = min(y2 + offset, origin_shape)
                 x2 = min(x2 + offset, origin_shape)
 
-                Img_object = Image.open(os.path.join(rootpath,r['image_id'])).crop((x1,y1,x2,y2)).resize((resize_shape,resize_shape),Image.ANTIALIAS)
+                Img_object, hori_pad, vert_pad = pad_img(Image.open(os.path.join(rootpath,r['image_id'])).crop((x1,y1,x2,y2)), origin_shape)
 
-                split_axis.loc[split_axis['vis']!='-1','x'] = (np.array(split_axis[split_axis['vis']!='-1']['x'], dtype='float32') - x1) * (resize_shape / (x2 - x1))
-                split_axis.loc[split_axis['vis']!='-1','y'] = (np.array(split_axis[split_axis['vis']!='-1']['y'], dtype='float32') - y1) * (resize_shape / (y2 - y1))
+                split_axis.loc[split_axis['vis']!='-1','x'] = (np.array(split_axis[split_axis['vis']!='-1']['x'], dtype='float32') - x1) + hori_pad
+                split_axis.loc[split_axis['vis']!='-1','y'] = (np.array(split_axis[split_axis['vis']!='-1']['y'], dtype='float32') - y1) + vert_pad
 
             if data_augment:
                 aug =  random.randint(0,2)
                 # 水平翻转
                 if aug == 1:
                     Img_object = Img_object.transpose(Image.FLIP_LEFT_RIGHT)
-                    split_axis.loc[split_axis['vis']!='-1','x'] = resize_shape - split_axis.loc[split_axis['vis']!='-1','x']
+                    split_axis.loc[split_axis['vis']!='-1','x'] = origin_shape - split_axis.loc[split_axis['vis']!='-1','x']
                 elif aug == 2:
                     Img_object = Img_object.transpose(Image.FLIP_TOP_BOTTOM)
-                    split_axis.loc[split_axis['vis']!='-1','y'] = resize_shape - split_axis.loc[split_axis['vis']!='-1','y']
+                    split_axis.loc[split_axis['vis']!='-1','y'] = origin_shape - split_axis.loc[split_axis['vis']!='-1','y']
 
             x_train.append(np.array(Img_object))
 
@@ -76,4 +73,17 @@ def readImageandLandmark(annoPath, batch_size=32, rootpath='../../Tianchi_Landma
 
         yield x_train, y_train
 
+def pad_img(Img, longer_side):
+    # longer_side = max(Img.size)
+    horizontal_padding = (longer_side - Img.size[0]) / 2
+    vertical_padding = (longer_side - Img.size[1]) / 2
+    Img = Img.crop(
+        (
+            -horizontal_padding,
+            -vertical_padding,
+            Img.size[0] + horizontal_padding,
+            Img.size[1] + vertical_padding
+        )
+    )
 
+    return Img, horizontal_padding, vertical_padding
