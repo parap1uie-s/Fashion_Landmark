@@ -13,7 +13,6 @@ model.load_weights(weight_path, by_name=True, skip_mismatch=True)
 if os.path.exists("vggbased_weight.h5"):
     model.load_weights("vggbased_weight.h5", by_name=True, skip_mismatch=True)
 
-
 optimizer = SGD(lr=0.001, decay=1e-6, momentum=0.9, clipnorm=5.0)
 model.compile(optimizer=optimizer, loss=NEloss)
 

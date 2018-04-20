@@ -82,7 +82,7 @@ if __name__ == '__main__':
         if y1 == x1 == y2 == x2 == 0:
             # no crop
             img = np.expand_dims(np.array( Image.open(os.path.join(rootpath,r['image_id'])) ),axis=0) / 255.0
-            points = exec_res(model.predict(img), hori_pad, vert_pad, None)
+            points = exec_res(model.predict(img), hori_pad, vert_pad, 0,0, None)
         else:
             img_object = Image.open(os.path.join(rootpath,r['image_id'])).crop((x1,y1,x2,y2))
             img_object, hori_pad_new, vert_pad_new = pad_img(img_object, 512)
