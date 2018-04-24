@@ -28,7 +28,8 @@
 	* CropAndResize
 		- 使用基于coco训练的MaskRCNN模型，分割填补图像，得到服装目标的左上角坐标(X<sub>1</sub>,Y<sub>1</sub>)和右下角坐标(X<sub>2</sub>,Y<sub>2</sub>)
 		- 对于未能检测出服装目标的图像，坐标值设为(0,0,0,0)
-		- 在上一步填补黑边的基础上，坐标变换结果继续写入train.csv和test.csv，并增加(X<sub>1</sub>,Y<sub>1</sub>,X<sub>2</sub>,Y<sub>2</sub>)信息，用于预测时还原坐标
+		- 若(X<sub>1</sub>,Y<sub>1</sub>,X<sub>2</sub>,Y<sub>2</sub>)不为0，则在训练过程的生成器中实时地裁剪图像、并二次填补黑边，使其保持512x512的尺寸。
+		- 将reshapeImage步骤的坐标变换结果继续写入train.csv和test.csv，并增加(X<sub>1</sub>,Y<sub>1</sub>,X<sub>2</sub>,Y<sub>2</sub>)信息，用于预测时还原坐标
 
 3. 训练步骤
 	* 模型设计思想：使用vgg19模型直接回归出24组坐标值.计算loss时考虑可见性。
