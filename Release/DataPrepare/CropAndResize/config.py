@@ -48,6 +48,10 @@ class Config(object):
     # down the training.
     VALIDATION_STEPS = 50
 
+    # Backbone network architecture
+    # Supported values are: resnet50, resnet101
+    BACKBONE = "resnet101"
+
     # The strides of each layer of the FPN Pyramid. These values
     # are based on a Resnet101 backbone.
     BACKBONE_STRIDES = [4, 8, 16, 32, 64]
@@ -78,6 +82,11 @@ class Config(object):
     POST_NMS_ROIS_TRAINING = 2000
     POST_NMS_ROIS_INFERENCE = 1000
 
+    # If enabled, resizes instance masks to a smaller size to reduce
+    # memory load. Recommended when using high-resolution images.
+    USE_MINI_MASK = True
+    MINI_MASK_SHAPE = (56, 56)  # (height, width) of the mini-mask
+
     # Input image resing
     # Images are resized such that the smallest side is >= IMAGE_MIN_DIM and
     # the longest side is <= IMAGE_MAX_DIM. In case both conditions can't
@@ -101,7 +110,9 @@ class Config(object):
     ROI_POSITIVE_RATIO = 0.33
 
     # Pooled ROIs
-    POOL_SIZE = 3
+    POOL_SIZE = 7
+    MASK_POOL_SIZE = 14
+    MASK_SHAPE = [28, 28]
 
     # Maximum number of ground truth instances to use in one image
     MAX_GT_INSTANCES = 100
@@ -115,7 +126,7 @@ class Config(object):
 
     # Minimum probability value to accept a detected instance
     # ROIs below this threshold are skipped
-    DETECTION_MIN_CONFIDENCE = 0.8
+    DETECTION_MIN_CONFIDENCE = 0.7
 
     # Non-maximum suppression threshold for detection
     DETECTION_NMS_THRESHOLD = 0.3
@@ -128,7 +139,7 @@ class Config(object):
     LEARNING_MOMENTUM = 0.9
 
     # Weight decay regularization
-    WEIGHT_DECAY = 0.0005
+    WEIGHT_DECAY = 0.0001
 
     # Use RPN ROIs or externally generated ROIs for training
     # Keep this True for most situations. Set to False if you want to train
@@ -136,8 +147,6 @@ class Config(object):
     # the RPN. For example, to debug the classifier head without having to
     # train the RPN.
     USE_RPN_ROIS = True
-
-    K = 3
 
     def __init__(self):
         """Set values of computed attributes."""
