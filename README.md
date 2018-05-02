@@ -40,8 +40,8 @@
 		- 同时对关键点坐标进行变换（x或y方向增加一个值）
 		- 坐标变换结果写入train.csv和test.csv，并增加填补黑边宽度（高度）数据，用于预测时还原坐标
 		
-		![原始图像](ReadmeImg/2.jpg "原始图像")&nbsp;&nbsp;&nbsp;
-		![填补后的图像](ReadmeImg/1.jpg "填补后的图像")
+		![原始图像](Release/ReadmeImg/2.jpg "原始图像")&nbsp;&nbsp;&nbsp;
+		![填补后的图像](Release/ReadmeImg/1.jpg "填补后的图像")
 
 	* CropAndResize
 		- 使用基于coco训练的MaskRCNN模型，分割填补图像，得到服装目标的左上角坐标(X<sub>1</sub>,Y<sub>1</sub>)和右下角坐标(X<sub>2</sub>,Y<sub>2</sub>)
