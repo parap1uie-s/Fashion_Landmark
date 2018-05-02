@@ -1,6 +1,6 @@
 # 天池大数据竞赛——服装关键点检测
 
-## TYUT_Landmark
+## Fashion_Landmark
 
 1. Requirement
 
